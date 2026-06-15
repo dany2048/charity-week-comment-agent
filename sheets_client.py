@@ -64,6 +64,11 @@ def append_drafts(drafts, date_str):
 
     Dedupes against the sheet: any comment_id already on a tab is skipped, so a
     re-fetched but still-awaiting-review comment is never duplicated.
+
+    Writes at an EXPLICIT end-of-sheet row via values.update (NOT values.append —
+    the merged-cell instruction panel breaks Google's table auto-detection and
+    drops rows into the middle of the panel). Uses RAW so long numeric comment_ids
+    stay exact text instead of being mangled into scientific notation.
     """
     svc = _svc()
     have = existing_comment_ids()
@@ -79,13 +84,15 @@ def append_drafts(drafts, date_str):
             rows.append([
                 d.get("platform", "YouTube"), source, d.get("author", ""),
                 d.get("comment_text", ""), d.get("draft_reply", ""),
-                d.get("status_default", ""), "", d.get("reason", ""), d["comment_id"],
+                d.get("status_default", ""), "", d.get("reason", ""), str(d["comment_id"]),
             ])
         if rows:
-            svc.values().append(
-                spreadsheetId=SHEET_ID, range=f"{tab}!A1",
-                valueInputOption="USER_ENTERED", insertDataOption="INSERT_ROWS",
-                body={"values": rows},
+            start = len(_values(tab)) + 1          # 1-based row after the last non-empty row
+            end = start + len(rows) - 1
+            last_col = chr(ord("A") + NCOLS - 1)    # 'I'
+            svc.values().update(
+                spreadsheetId=SHEET_ID, range=f"{tab}!A{start}:{last_col}{end}",
+                valueInputOption="RAW", body={"values": rows},
             ).execute()
             total += len(rows)
     return total

@@ -66,9 +66,18 @@ def build_tab(svc, gid, tab, drafts, pending):
             d.get("reason", ""), d["comment_id"],
         ])
 
+    # Unmerge BEFORE writing values: writing into a still-merged cell keeps only
+    # column A and silently drops B-I. Stale merges from a prior layout would
+    # otherwise eat the header + first data row. Must be its own call, pre-write.
+    svc.batchUpdate(spreadsheetId=SHEET_ID, body={"requests": [
+        {"unmergeCells": {"range": {"sheetId": gid, "startRowIndex": 0,
+                                    "endRowIndex": 1000, "startColumnIndex": 0,
+                                    "endColumnIndex": NCOLS}}}]}).execute()
+
     svc.values().clear(spreadsheetId=SHEET_ID, range=tab).execute()
+    # RAW so long numeric comment_ids are stored as exact text, not scientific notation
     svc.values().update(spreadsheetId=SHEET_ID, range=f"{tab}!A1",
-                        valueInputOption="USER_ENTERED", body={"values": rows}).execute()
+                        valueInputOption="RAW", body={"values": rows}).execute()
 
     def grid(r0, r1, c0, c1):
         return {"sheetId": gid, "startRowIndex": r0, "endRowIndex": r1,
