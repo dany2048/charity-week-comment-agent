@@ -33,11 +33,11 @@ zero-risk AUTO_SAFE bucket can be re-enabled for auto-send.)
    - Write `state/drafts.json` (schema in cw_voice.md; include video_title +
      status_default).
 
-3. **Publish to the review sheet (I/O):**
-   - First time / full rebuild: `python build_review_sheet.py`
-     (formatted instructions panel on top + table + Status dropdown).
-   - Daily incremental (append only new rows): `python push_drafts.py <YYYY-MM-DD>`
-     in hold mode just appends to the sheet (no auto-send).
+3. **Publish to the review sheet (I/O):** `python push_drafts.py <YYYY-MM-DD>`
+   → HOLD mode: appends only NEW rows to the right tab, de-duped against the sheet.
+   ⚠️ The daily routine uses **push_drafts.py ONLY**. NEVER run `build_review_sheet.py`
+   in the routine — it is a DESTRUCTIVE full rebuild that wipes volunteer Status/edits,
+   and is guarded behind `CW_ALLOW_REBUILD=1` (one-time manual setup only).
 
 4. **Notify volunteers (manual paste by Marya):** `push_drafts.py` writes the
    ready-to-paste line to `state/nudge.txt`. Marya pastes it into the CW WhatsApp

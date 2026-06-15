@@ -148,6 +148,14 @@ def build_tab(svc, gid, tab, drafts, pending):
 
 
 def main():
+    # DESTRUCTIVE: full rebuild wipes all tabs incl. volunteer Status/edits. The daily
+    # routine must NEVER run this (it appends via push_drafts.py). Guarded so a cloud
+    # run can't accidentally clobber the sheet — only an explicit manual run can.
+    if os.environ.get("CW_ALLOW_REBUILD") != "1":
+        raise SystemExit(
+            "build_review_sheet.py is a DESTRUCTIVE full rebuild and is disabled by "
+            "default. The daily routine should use push_drafts.py (append) instead. "
+            "To rebuild on purpose, run with CW_ALLOW_REBUILD=1.")
     svc = build("sheets", "v4", credentials=get_credentials(), cache_discovery=False).spreadsheets()
     drafts = json.load(open(os.path.join(STATE, "drafts.json")))
     pending = {c["comment_id"]: c for c in json.load(open(os.path.join(STATE, "comments_pending.json")))}
