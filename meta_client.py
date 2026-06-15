@@ -16,7 +16,18 @@ import requests
 
 GV = os.environ.get("CW_META_GRAPH_VERSION", "v23.0")
 BASE = f"https://graph.facebook.com/{GV}"
-PAGE_TOKEN = os.environ.get("CW_META_PAGE_TOKEN", "")
+
+
+def _resolve(env_key, file_path):
+    """Prefer the env var; fall back to a file. Long tokens get truncated by some
+    cloud env-var boxes, so the Setup script can instead write them to a file."""
+    v = os.environ.get(env_key, "").strip()
+    if not v and os.path.exists(file_path):
+        v = open(file_path).read().strip()
+    return v
+
+
+PAGE_TOKEN = _resolve("CW_META_PAGE_TOKEN", "state/meta_page_token.txt")
 PAGE_ID = os.environ.get("CW_FB_PAGE_ID", "")
 IG_ID = os.environ.get("CW_IG_USER_ID", "")
 
