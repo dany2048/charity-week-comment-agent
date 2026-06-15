@@ -1,0 +1,8 @@
+# secrets + runtime state — NEVER commit
+.env
+state/*
+!state/.gitkeep
+
+# python
+__pycache__/
+*.pyc
